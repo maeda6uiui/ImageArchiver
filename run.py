@@ -18,21 +18,21 @@ def add_directory_to_zip(zipf:zipfile.ZipFile,path:str):
             )
 
 def main(args):
-    target_dir:str=args.target_dir
-    archive_save_dir:str=args.archive_save_dir
-    num_dirs_per_archive:int=args.num_dirs_per_archive
+    input_root_dir:str=args.input_root_dir
+    output_dir:str=args.output_dir
+    num_subdirs_per_archive:int=args.num_subdirs_per_archive
     index_lower_bound:int=args.index_lower_bound
     index_upper_bound:int=args.index_upper_bound
     filename_start_index:int=args.filename_start_index
 
     logger.info(args)
 
-    os.makedirs(archive_save_dir,exist_ok=True)
+    os.makedirs(output_dir,exist_ok=True)
 
-    pathname=os.path.join(target_dir,"*")
-    directories=glob.glob(pathname)
+    pathname=os.path.join(input_root_dir,"*")
+    subdirs=glob.glob(pathname)
 
-    num_archives,mod=divmod(len(directories),num_dirs_per_archive)
+    num_archives,mod=divmod(len(subdirs),num_subdirs_per_archive)
     if mod!=0:
         num_archives+=1
 
@@ -45,29 +45,26 @@ def main(args):
 
         logger.info("===== Archive #{} =====".format(idx))
 
-        start_index=idx*num_dirs_per_archive
-        if idx==num_archives-1:
-            end_index=len(directories)
-        else:
-            end_index=(idx+1)*num_dirs_per_archive
-        target_directories=directories[start_index:end_index]
+        start_index=idx*num_subdirs_per_archive
+        end_index=(idx+1)*num_subdirs_per_archive
+        input_dirs=subdirs[start_index:end_index]
 
-        archive_filepath=os.path.join(archive_save_dir,str(filename_index)+".zip")
+        archive_filepath=os.path.join(output_dir,str(filename_index)+".zip")
         with zipfile.ZipFile(archive_filepath,"w",zipfile.ZIP_DEFLATED) as zipf:
-            for target_directory in target_directories:
-                add_directory_to_zip(zipf,target_directory)
+            for input_dir in input_dirs:
+                add_directory_to_zip(zipf,input_dir)
 
         logger.info("Created an archive file {}".format(archive_filepath))
         filename_index+=1
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
-    parser.add_argument("--target_dir",type=str,default="./Image")
-    parser.add_argument("--archive_save_dir",type=str,default="./Archive")
-    parser.add_argument("--num_dirs_per_archive",type=int,default=500)
-    parser.add_argument("--index_lower_bound",type=int,default=0)
-    parser.add_argument("--index_upper_bound",type=int,default=-1)
-    parser.add_argument("--filename_start_index",type=int,default=0)
+    parser.add_argument("-i","--input_root_dir",type=str,default="./Image")
+    parser.add_argument("-o","--output_dir",type=str,default="./Archive")
+    parser.add_argument("-n","--num_subdirs_per_archive",type=int,default=500)
+    parser.add_argument("-l","--index_lower_bound",type=int,default=0)
+    parser.add_argument("-u","--index_upper_bound",type=int,default=-1)
+    parser.add_argument("-f","--filename_start_index",type=int,default=0)
     args=parser.parse_args()
 
     main(args)
